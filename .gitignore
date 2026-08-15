@@ -1,0 +1,30 @@
+﻿# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pfx
+*.pem
+*.key
+.azure/
+
+# Terraform state, if Terraform is tested later
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Application dependencies and logs
+node_modules/
+npm-debug.log*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local VS Code settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Operating-system files
+.DS_Store
+Thumbs.db
