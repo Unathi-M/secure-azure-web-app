@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Azure Web Application</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 20px; background: #f4f7fb; color: #172033; }
+    header, section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    h1 { color: #0b4f8a; margin-top: 0; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #e6f7ed; color: #137333; font-weight: bold; }
+    .error { background: #fde8e8; color: #9b1c1c; padding: 12px; border-radius: 8px; }
+    li { margin: 8px 0; }
+    code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Secure Azure Web Application</h1>
+    <p>Portfolio project demonstrating network segmentation, least-privilege access, monitoring, and threat detection.</p>
+    <span id="health" class="badge">Checking backend...</span>
+  </header>
+
+  <section>
+    <h2>Backend status</h2>
+    <p id="status">Loading...</p>
+    <p><strong>Request ID:</strong> <code id="request-id">Not available</code></p>
+  </section>
+
+  <section>
+    <h2>Security controls represented</h2>
+    <ul id="items"><li>Loading...</li></ul>
+  </section>
+
+  <script>
+    const backendUrl = "http://localhost:3001";
+
+    async function loadBackendData( ) {
+      try {
+        const healthResponse = await fetch(`${backendUrl}/health`);
+        const health = await healthResponse.json();
+        document.getElementById("health").textContent = `Backend: ${health.status}`;
+        document.getElementById("request-id").textContent = healthResponse.headers.get("X-Request-ID") || "Not returned";
+
+        const statusResponse = await fetch(`${backendUrl}/api/status`);
+        const status = await statusResponse.json();
+        document.getElementById("status").textContent = `Service: ${status.service} | Environment: ${status.environment}`;
+
+        const itemsResponse = await fetch(`${backendUrl}/api/items`);
+        const data = await itemsResponse.json();
+        document.getElementById("items").innerHTML = data.items.map(item => `<li>${item.name}</li>`).join("");
+      } catch (error) {
+        document.getElementById("health").textContent = "Backend unavailable";
+        document.getElementById("health").className = "error";
+        document.getElementById("status").textContent = error.message;
+      }
+    }
+
+    loadBackendData();
+  </script>
+</body>
+</html>
