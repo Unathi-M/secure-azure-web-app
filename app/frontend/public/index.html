@@ -5,58 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Secure Azure Web Application</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 20px; background: #f4f7fb; color: #172033; }
-    header, section { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
-    h1 { color: #0b4f8a; margin-top: 0; }
-    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #e6f7ed; color: #137333; font-weight: bold; }
-    .error { background: #fde8e8; color: #9b1c1c; padding: 12px; border-radius: 8px; }
-    li { margin: 8px 0; }
+    :root { --azure: #0b4f8a; --ink: #172033; --muted: #56657a; --surface: #ffffff; --page: #f4f7fb; --success: #137333; --warning: #8a5a00; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; max-width: 960px; margin: 0 auto; padding: 40px 20px; background: var(--page ); color: var(--ink); line-height: 1.5; }
+    header, section { background: var(--surface); border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+    h1 { color: var(--azure); margin: 0 0 8px; }
+    h2 { color: var(--azure); margin-top: 0; }
+    .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-weight: bold; }
+    .healthy { background: #e6f7ed; color: var(--success); }
+    .pending { background: #fff3cd; color: var(--warning); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .card { border: 1px solid #d7e0eb; border-radius: 8px; padding: 16px; background: #fbfdff; }
     code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+    li { margin: 8px 0; }
   </style>
 </head>
 <body>
   <header>
     <h1>Secure Azure Web Application</h1>
-    <p>Portfolio project demonstrating network segmentation, least-privilege access, monitoring, and threat detection.</p>
-    <span id="health" class="badge">Checking backend...</span>
+    <p>Portfolio project demonstrating Azure network segmentation, least-privilege access, security-focused application design, and a staged deployment approach.</p>
+    <span id="health" class="badge pending">Hosted frontend ready</span>
   </header>
 
   <section>
-    <h2>Backend status</h2>
-    <p id="status">Loading...</p>
-    <p><strong>Request ID:</strong> <code id="request-id">Not available</code></p>
+    <h2>Deployment status</h2>
+    <p id="status">Loading deployment status...</p>
+    <p><strong>Request ID:</strong> <code id="request-id">Not applicable</code></p>
+  </section>
+
+  <section>
+    <h2>Architecture represented</h2>
+    <div class="grid">
+      <div class="card"><strong>Frontend</strong>  
+Azure Static Web Apps Free hosts this public portfolio frontend.</div>
+      <div class="card"><strong>Network foundation</strong>  
+Azure VNet and separate integration/private-endpoint subnets were deployed with Bicep.</div>
+      <div class="card"><strong>Backend API</strong>  
+Node.js/Express API tested locally. Azure App Service deployment is documented but pending quota availability.</div>
+    </div>
   </section>
 
   <section>
     <h2>Security controls represented</h2>
-    <ul id="items"><li>Loading...</li></ul>
+    <ul id="items">
+      <li>Network segmentation with dedicated subnets and network security groups</li>
+      <li>Least-privilege access and MFA design documented for Microsoft Entra ID</li>
+      <li>HTTPS-only application configuration and disabled FTP publishing in the App Service design</li>
+      <li>Planned monitoring, threat detection, and incident-response workflow</li>
+    </ul>
   </section>
 
   <script>
-    const backendUrl = "http://localhost:3001";
+    const localHostnames = ["localhost", "127.0.0.1"];
+    const configuredApi = new URLSearchParams(window.location.search).get("api");
+    const backendUrl = configuredApi || (localHostnames.includes(window.location.hostname) ? "http://localhost:3001" : null );
 
-    async function loadBackendData( ) {
+    async function loadStatus() {
+      if (!backendUrl) {
+        document.getElementById("status").textContent = "This frontend is hosted on Azure Static Web Apps Free. The Node.js backend remains available for local validation while the App Service B1 quota request is unavailable.";
+        return;
+      }
+
       try {
         const healthResponse = await fetch(`${backendUrl}/health`);
         const health = await healthResponse.json();
-        document.getElementById("health").textContent = `Backend: ${health.status}`;
+        const healthBadge = document.getElementById("health");
+        healthBadge.textContent = `Local backend: ${health.status}`;
+        healthBadge.className = "badge healthy";
         document.getElementById("request-id").textContent = healthResponse.headers.get("X-Request-ID") || "Not returned";
 
         const statusResponse = await fetch(`${backendUrl}/api/status`);
         const status = await statusResponse.json();
         document.getElementById("status").textContent = `Service: ${status.service} | Environment: ${status.environment}`;
-
-        const itemsResponse = await fetch(`${backendUrl}/api/items`);
-        const data = await itemsResponse.json();
-        document.getElementById("items").innerHTML = data.items.map(item => `<li>${item.name}</li>`).join("");
       } catch (error) {
-        document.getElementById("health").textContent = "Backend unavailable";
-        document.getElementById("health").className = "error";
-        document.getElementById("status").textContent = error.message;
+        document.getElementById("status").textContent = `Local backend was not reachable: ${error.message}`;
       }
     }
 
-    loadBackendData();
+    loadStatus();
   </script>
 </body>
 </html>
