@@ -15,6 +15,10 @@ param integrationSubnetName string = 'snet-appservice-integration-dev'
 @description('The deployed Static Web Apps origin permitted to call the backend API.')
 param allowedFrontendOrigin string = 'https://thankful-dune-09f3e2d0f.7.azurestaticapps.net'
 
+@secure()
+@description('Optional Application Insights connection string. Leave empty until an observability resource exists.')
+param applicationInsightsConnectionString string = ''
+
 @description('Dedicated App Service SKU. B1 is the initial target; do not change it until quota availability is checked.')
 @allowed([
   'B1'
@@ -85,10 +89,15 @@ resource backend 'Microsoft.Web/sites@2023-12-01' = {
           name: 'ALLOWED_ORIGINS'
           value: allowedFrontendOrigin
         }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: applicationInsightsConnectionString
+        }
       ]
     }
   }
 }
+
 
 output appServicePlanName string = appServicePlan.name
 output backendAppName string = backend.name

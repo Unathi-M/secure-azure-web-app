@@ -1,4 +1,7 @@
-﻿const express = require("express");
+﻿const { enableTelemetry } = require("./telemetry");
+const telemetryEnabled = enableTelemetry();
+
+const express = require("express");
 const crypto = require("crypto");
 const cors = require("cors");
 const { getSecurityControls, isDatabaseConfigured } = require("./database");
@@ -46,7 +49,8 @@ app.use((req, res, next) => {
       path: req.path,
       statusCode: res.statusCode,
       durationMs: Date.now() - startedAt,
-      deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local"
+      deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local",
+      telemetryEnabled
     }));
   });
 
@@ -58,7 +62,8 @@ app.get("/health", (req, res) => {
     status: "healthy",
     service: "secure-azure-backend",
     deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local",
-    databaseConfigured: isDatabaseConfigured()
+    databaseConfigured: isDatabaseConfigured(),
+    telemetryEnabled
   });
 });
 
@@ -67,6 +72,7 @@ app.get("/api/status", (req, res) => {
     service: "backend-api",
     environment: process.env.NODE_ENV || "development",
     deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local",
+    telemetryEnabled,
     timestamp: new Date().toISOString()
   });
 });
