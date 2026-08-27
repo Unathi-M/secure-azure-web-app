@@ -1,6 +1,7 @@
 ﻿const express = require("express");
 const crypto = require("crypto");
 const cors = require("cors");
+const { getSecurityControls, isDatabaseConfigured } = require("./database");
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -56,7 +57,8 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     status: "healthy",
     service: "secure-azure-backend",
-    deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local"
+    deployment: process.env.WEBSITE_SITE_NAME ? "azure-app-service" : "local",
+    databaseConfigured: isDatabaseConfigured()
   });
 });
 
@@ -69,15 +71,31 @@ app.get("/api/status", (req, res) => {
   });
 });
 
-app.get("/api/items", (req, res) => {
-  res.status(200).json({
-    source: "local-static-data",
-    items: [
-      { id: 1, name: "Network segmentation" },
-      { id: 2, name: "Least-privilege access" },
-      { id: 3, name: "Threat detection" }
-    ]
-  });
+app.get("/api/items", async (req, res) => {
+  if (!isDatabaseConfigured()) {
+    return res.status(200).json({
+      source: "local-static-data",
+      items: [
+        { id: 1, name: "Network segmentation" },
+        { id: 2, name: "Least-privilege access" },
+        { id: 3, name: "Threat detection" }
+      ]
+    });
+  }
+
+  try {
+    const items = await getSecurityControls();
+    return res.status(200).json({
+      source: "azure-sql-private-endpoint",
+      items
+    });
+  } catch (error) {
+    console.error(JSON.stringify({
+      event: "azure_sql_query_failed",
+      message: error.message
+    }));
+    return res.status(503).json({ error: "The secured data tier is not available." });
+  }
 });
 
 app.use((error, req, res, next) => {
