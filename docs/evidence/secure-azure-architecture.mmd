@@ -1,0 +1,33 @@
+flowchart LR
+    U[User browser]
+    SWA[Azure Static Web Apps<br/>Public frontend]
+    API[Azure App Service<br/>Node.js API<br/>HTTPS-only + managed identity]
+    VNET[East US VNet<br/>10.20.0.0/16]
+    INT[App Service integration subnet<br/>Microsoft.Web/serverfarms]
+    PE[Private endpoint subnet]
+    SQL[Azure SQL Database<br/>Public access disabled]
+    DNS[Private DNS zone<br/>privatelink.database.windows.net]
+    MON[Application Insights<br/>Log Analytics]
+    NSG1[Integration NSG]
+    NSG2[Private endpoint NSG]
+    GH[GitHub Actions CI/CD]
+
+    U -->|HTTPS| SWA
+    GH -->|Deploys frontend| SWA
+    SWA -->|HTTPS /api calls<br/>restricted origin| API
+    API -->|VNet integration| INT
+    INT -. protected by .-> NSG1
+    API -->|Private SQL connection| PE
+    PE -. protected by .-> NSG2
+    PE --> SQL
+    DNS -. private name resolution .-> PE
+    API -->|Telemetry| MON
+    VNET --- INT
+    VNET --- PE
+
+    classDef live fill:#d9f7e8,stroke:#137333,color:#172033;
+    classDef designed fill:#e8f0fe,stroke:#0b4f8a,color:#172033;
+    classDef blocked fill:#fff3cd,stroke:#8a5a00,color:#172033;
+    class SWA,GH live;
+    class U,VNET,INT,PE,NSG1,NSG2 designed;
+    class API,SQL,DNS,MON blocked;
