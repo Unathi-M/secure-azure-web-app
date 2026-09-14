@@ -1,0 +1,24 @@
+name: Managed API prototype preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  compatibility-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate prototype sources
+        run: |
+          node --check api/handlers.js
+          node --check api/src/functions/api.js
+          node --check local-server.js
+      - name: Static Web Apps configuration preview
+        run: |
+          test -d api
+          test -f public/staticwebapp.config.json
+          echo "api_location would be: api"
+          echo "No Azure deployment is configured in this preview workflow."

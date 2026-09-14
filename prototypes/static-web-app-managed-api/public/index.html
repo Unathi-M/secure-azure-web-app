@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secure Azure Managed API Prototype</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #172033; background: #f4f7fb; }
+    body { max-width: 860px; margin: 0 auto; padding: 32px 20px; }
+    section { background: white; border-radius: 12px; padding: 22px; margin-bottom: 16px; box-shadow: 0 3px 14px rgba(0,0,0,.08); }
+    h1, h2 { color: #0b4f8a; }
+    .badge { display: inline-block; padding: 5px 10px; border-radius: 999px; background: #fff3cd; color: #8a5a00; font-weight: bold; }
+    .healthy { background: #e6f7ed; color: #137333; }
+    li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <section>
+    <h1>Secure Azure Managed API Prototype</h1>
+    <p>This isolated prototype tests same-origin <code>/api</code> routes for Azure Static Web Apps managed API compatibility.</p>
+    <span id="health" class="badge">Checking API...</span>
+  </section>
+  <section>
+    <h2>API status</h2>
+    <p id="status">Loading...</p>
+    <p><strong>Request ID:</strong> <code id="request-id">Not returned</code></p>
+  </section>
+  <section>
+    <h2>Security controls</h2>
+    <ul id="items"><li>Loading...</li></ul>
+  </section>
+  <script>
+    async function loadPrototype() {
+      try {
+        const healthResponse = await fetch("/api/health");
+        const health = await healthResponse.json();
+        const badge = document.getElementById("health");
+        badge.textContent = `API: ${health.status}`;
+        badge.className = "badge healthy";
+        document.getElementById("request-id").textContent = healthResponse.headers.get("x-request-id") || "Not returned";
+
+        const statusResponse = await fetch("/api/status");
+        const status = await statusResponse.json();
+        document.getElementById("status").textContent = `Service: ${status.service} | Environment: ${status.environment}`;
+
+        const itemsResponse = await fetch("/api/items");
+        const data = await itemsResponse.json();
+        document.getElementById("items").innerHTML = data.items.map(item => `<li>${item.name}</li>`).join("");
+      } catch (error) {
+        document.getElementById("health").textContent = "API unavailable";
+        document.getElementById("status").textContent = error.message;
+      }
+    }
+
+    loadPrototype();
+  </script>
+</body>
+</html>
